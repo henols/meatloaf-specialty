@@ -25,14 +25,14 @@ jobs:
       patch: ${{ steps.version.outputs.patch }}
       fw_version: ${{ steps.version.outputs.fw_version }}
       date: ${{ steps.version.outputs.date }}
-      full_version: ${{ steps.version.outputs.major }}.${{ steps.version.outputs.mainor }}.${{ steps.version.outputs.patch }}
+      full_version: ${{ steps.version.outputs.major }}.${{ steps.version.outputs.minor }}.${{ steps.version.outputs.patch }}
   build:
     needs: version
     strategy:
       fail-fast: true
       matrix:
         environments: 
-          - lolin-d32-pro@16mb
+          - lolin-d32-pro#16mb
           # - ttgo-t1
           # - esp32-wroom
           # - esp32-wroom-pi1541
@@ -47,40 +47,39 @@ jobs:
       fw_version: ${{needs.version.outputs.fw_version}}
       date: ${{needs.version.outputs.date}}
       full_version: ${{needs.version.outputs.full_version}}
-
     steps:
       - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install PlatformIO Core
+        run: |
+          python -m pip install --upgrade pip
+          pip install --upgrade platformio pyyaml
+        
       - uses: actions/cache@v4
         with:
           path: |
             ~/.cache/pip
             ~/.platformio/.cache
           key: ${{ runner.os }}-pio
-      - uses: actions/setup-python@v4
-        with:
-          python-version: '3.9'
-      - name: Install PlatformIO Core
-        run: |
-          python -m pip install --upgrade pip
-          pip install --upgrade platformio pyyaml
-      
       - name: Get environment and flash size
         run: |
-          echo "build_environment="$( echo ${{ matrix.environments }} | grep -Po '.+?(?=@)' ) >> $GITHUB_ENV
-          echo "flash_size="$( echo ${{ matrix.environments }} | grep -Po '(?<=@).*' ) >> $GITHUB_ENV
+          echo "build_environment="$( echo ${{ matrix.environments }} | grep -Po '.+?(?=#)' ) >> $GITHUB_ENV
+          echo "flash_size="$( echo ${{ matrix.environments }} | grep -Po '(?<=#).*' ) >> $GITHUB_ENV
             
       - name: Create platrform.ini for ${{ env.build_environment }} ${{ env.flash_size }}
         run: python .github/scripts/create_config.py environment=${{ env.build_environment }} flash_size=${{ env.flash_size }}
 
-      - name: Update version ${{ env.major }}.${{ env.minor }}.${{ env.patch }}, FW version ${{ env.fw_version }} ${{ env.date }}
+      - name: Update version ${{ env.major }}.${{ env.minor }}.${{ env.patch }}, FW version ${{ env.fw_version }}, Date ${{ env.date }}
         run: python .github/scripts/update_version.py '${{ env.major }}' '${{ env.minor }}' '${{ env.patch }}' '${{ env.fw_version }}' '${{ env.date }}'
       - name: Build Meatloaf for ${{ env.build_environment }} ${{ env.flash_size }}
-        run: pio run --environment ${{ env.build_environment }}
+        run: pio run
       - name: Rename file meatloaf.${{ env.build_environment }}.bin -> meatloaf.${{ env.build_environment }}.${{ env.flash_size }}-${{ env.major }}.${{ env.minor }}.${{ env.patch }}.bin  ${{ env.full_version }}
-        run: mv bin/meatloaf.${{ env.build_environment }}.bin bin/meatloaf.${{ env.build_environment }}.${{ env.flash_size }}-${{ env.major }}.${{ env.minor }}.${{ env.patch }}.bin
-        env:
-          full_version: ${{needs.version.outputs.major}}.${{needs.version.outputs.minor}}.${{needs.version.outputs.patch}}
-      - name: Deploy build ${{ matrix.environment }} ${{ matrix.flash_size }}
+        run: mv bin/meatloaf.${{ env.build_environment }}.bin bin/meatloaf.${{ env.build_environment }}.${{ env.flash_size }}-${{ env.full_version }}.bin
+      - name: Upload build ${{ env.build_environment }} ${{ matrix.flash_size }}
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           username: ${{ secrets.FTP_USER }}
@@ -89,21 +88,20 @@ jobs:
           port: ${{ vars.FTP_PORT }}
           local-dir: ./bin/
           server-dir: ${{ vars.FTP_PATH }}
-          state-name: .sync-state-${{ matrix.environment }}.json
+          state-name: .sync-state-${{ matrix.environments }}.json
           # dry-run: true
 
   create-tag:
     needs: build
     runs-on: ubuntu-latest
     env:
-      major: ${{needs.version.outputs.major}}
-      minor: ${{needs.version.outputs.minor}}
-      patch: ${{needs.version.outputs.patch}}
+      full_version: ${{ needs.version.outputs.full_version }}
     steps:
-      - name: Create version tag ${{ env.major }}.${{ env.minor }}.${{ env.patch }}
+      - uses: actions/checkout@v4
+      - name: Create version tag -${{ env.full_version }}-.
         uses: tvdias/github-tagger@v0.0.1
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
-          tag: ${{ env.major }}.${{ env.minor }}.${{ env.patch }}
-      - name: Echo
-        run: echo ${{ steps.tag.outputs.result }}
+          tag: ${{ env.full_version }}.
+      # - name: Echo
+      #   run: echo ${{ steps.create-tag.outputs.result }}
