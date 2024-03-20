@@ -86,7 +86,7 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           server: ${{ env.FTP_SERVER }}
           local-dir: './bin/'
-          server-dir: ${{ env.FTP_DIR }}
+          server-dir: ${{ env.FTP_PATH }}
           state-name: .sync-state-${{ matrix.environment }}.json
           dry-run: true
 
