@@ -84,9 +84,9 @@ jobs:
         with:
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          server: ${{ secrets.FTP_SERVER }}
+          server: ${{ env.FTP_SERVER }}
           local-dir: './bin/'
-          server-dir: '/Multimedia/ml/'
+          server-dir: ${{ env.FTP_DIR }}
           state-name: .sync-state-${{ matrix.environment }}.json
           dry-run: true
 
