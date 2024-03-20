@@ -25,6 +25,7 @@ jobs:
       patch: ${{ steps.version.outputs.patch }}
       fw_version: ${{ steps.version.outputs.fw_version }}
       date: ${{ steps.version.outputs.date }}
+      full_version: ${{ steps.version.outputs.major }}.${{ steps.version.outputs.mainor }}.${{ steps.version.outputs.patch }}
   build:
     needs: version
     strategy:
@@ -45,9 +46,9 @@ jobs:
       patch: ${{needs.version.outputs.patch}}
       fw_version: ${{needs.version.outputs.fw_version}}
       date: ${{needs.version.outputs.date}}
+      full_version: ${{needs.version.outputs.full_version}}
 
     steps:
-      
       - uses: actions/checkout@v4
       - uses: actions/cache@v4
         with:
@@ -71,7 +72,7 @@ jobs:
       - name: Create platrform.ini for ${{ env.build_environment }} ${{ env.flash_size }}
         run: python .github/scripts/create_config.py environment=${{ env.build_environment }} flash_size=${{ env.flash_size }}
 
-      - name: Bump version number ${{ env.major }}.${{ env.minor }}.${{ env.patch }} ${{ env.fw_version }} ${{ env.date }}
+      - name: Update version ${{ env.major }}.${{ env.minor }}.${{ env.patch }}, FW version ${{ env.fw_version }} ${{ env.date }}
         run: python .github/scripts/update_version.py '${{ env.major }}' '${{ env.minor }}' '${{ env.patch }}' '${{ env.fw_version }}' '${{ env.date }}'
       - name: Build Meatloaf for ${{ env.build_environment }} ${{ env.flash_size }}
         run: pio run --environment ${{ env.build_environment }}
@@ -84,9 +85,9 @@ jobs:
         with:
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          server: ${{ env.FTP_SERVER }}
+          server: ${{ vars.FTP_SERVER }}
           local-dir: ./bin/
-          server-dir: ${{ env.FTP_PATH }}
+          server-dir: ${{ vars.FTP_PATH }}
           state-name: .sync-state-${{ matrix.environment }}.json
           # dry-run: true
 
