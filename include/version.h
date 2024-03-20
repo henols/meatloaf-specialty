@@ -8,7 +8,7 @@
 */
 
 #define FN_VERSION_MAJOR 0
-#define FN_VERSION_MINOR 5
+#define FN_VERSION_MINOR 6
 
 #define FN_VERSION_BUILD "local-build"
 
