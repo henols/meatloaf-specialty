@@ -10,11 +10,11 @@
 #define FN_VERSION_MAJOR 0
 #define FN_VERSION_MINOR 5
 
-#define FN_VERSION_BUILD "f43d1e2"
+#define FN_VERSION_BUILD "local-build"
 
 #define FN_VERSION_DATE "2023-07-05 05:02:11"
 
-#define FN_VERSION_FULL "0.5.f43d1e2"
+#define FN_VERSION_FULL "0.6.local-build"
 
 #define FW_VERSION "20230705.05"
 
