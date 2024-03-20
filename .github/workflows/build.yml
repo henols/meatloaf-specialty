@@ -86,6 +86,7 @@ jobs:
           username: ${{ secrets.FTP_USER }}
           password: ${{ secrets.FTP_PASSWORD }}
           server: ${{ vars.FTP_SERVER }}
+          port: ${{ vars.FTP_PORT }}
           local-dir: ./bin/
           server-dir: ${{ vars.FTP_PATH }}
           state-name: .sync-state-${{ matrix.environment }}.json
