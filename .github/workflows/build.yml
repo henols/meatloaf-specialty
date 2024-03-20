@@ -83,7 +83,7 @@ jobs:
       - name: Deploy build ${{ matrix.environment }} ${{ matrix.flash_size }}
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
-          username: ${{ secrets.FTP_USERNAME }}
+          username: ${{ secrets.FTP_USER }}
           password: ${{ secrets.FTP_PASSWORD }}
           server: ${{ vars.FTP_SERVER }}
           local-dir: ./bin/
