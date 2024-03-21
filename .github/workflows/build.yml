@@ -100,7 +100,8 @@ jobs:
       - name: Download all workflow run artifacts
         uses: actions/download-artifact@v4
         with:
-          path: ./meatloaf/
+          path: meatloaf
+          merge-multiple: true
       - name: Upload build version ${{ env.full_version }}
         # uses: milanmk/actions-file-deployer@master
         # with:
@@ -116,7 +117,7 @@ jobs:
           host: ${{ secrets.FTP_SERVER }}
           user: ${{ secrets.FTP_USER }}
           password: ${{ secrets.FTP_PASSWORD }}
-          localDir: bin
+          localDir: meatloaf
           remoteDir: ${{ vars.FTP_PATH }}
           options: "-p ${{ vars.FTP_PORT }}"
         # uses: SamKirkland/FTP-Deploy-Action@v4.3.5
