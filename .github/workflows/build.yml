@@ -26,6 +26,7 @@ jobs:
       fw_version: ${{ steps.version.outputs.fw_version }}
       date: ${{ steps.version.outputs.date }}
       full_version: ${{ steps.version.outputs.major }}.${{ steps.version.outputs.minor }}.${{ steps.version.outputs.patch }}
+      
   build:
     needs: version
     strategy:
@@ -77,19 +78,15 @@ jobs:
         run: python .github/scripts/update_version.py '${{ env.major }}' '${{ env.minor }}' '${{ env.patch }}' '${{ env.fw_version }}' '${{ env.date }}'
       - name: Build Meatloaf for ${{ env.build_environment }} ${{ env.flash_size }}
         run: pio run
-      - name: Rename file meatloaf.${{ env.build_environment }}.bin -> meatloaf.${{ env.build_environment }}.${{ env.flash_size }}-${{ env.major }}.${{ env.minor }}.${{ env.patch }}.bin  ${{ env.full_version }}
+      - name: Rename file meatloaf.${{ env.build_environment }}.bin -> meatloaf.${{ env.build_environment }}.${{ env.flash_size }}-${{ env.full_version }}.bin  
         run: mv bin/meatloaf.${{ env.build_environment }}.bin bin/meatloaf.${{ env.build_environment }}.${{ env.flash_size }}-${{ env.full_version }}.bin
-      - name: Upload build ${{ env.build_environment }} ${{ matrix.flash_size }}
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+      - name: Archive production artifacts
+        uses: actions/upload-artifact@v4
         with:
-          username: ${{ secrets.FTP_USER }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          server: ${{ vars.FTP_SERVER }}
-          port: ${{ vars.FTP_PORT }}
-          local-dir: ./bin/
-          server-dir: ${{ vars.FTP_PATH }}
-          state-name: .sync-state-${{ matrix.environments }}.json
-          # dry-run: true
+          name: dist-without-markdown
+          path: bin/*.bin
+            
+
 
   create-tag:
     needs: build
@@ -98,10 +95,23 @@ jobs:
       full_version: ${{ needs.version.outputs.full_version }}
     steps:
       - uses: actions/checkout@v4
-      - name: Create version tag -${{ env.full_version }}-.
-        uses: tvdias/github-tagger@v0.0.1
+      - name: Download all workflow run artifacts
+        uses: actions/download-artifact@v4
+      - name: Upload build ${{ env.build_environment }} ${{ matrix.flash_size }}
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          tag: ${{ env.full_version }}.
+          username: ${{ secrets.FTP_USER }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          server: ${{ vars.FTP_SERVER }}
+          port: ${{ vars.FTP_PORT }}
+          local-dir: /bin/
+          server-dir: ${{ vars.FTP_PATH }}
+          state-name: .sync-state-${{ matrix.environments }}.json
+          # dry-run: true
+      # - name: Create version tag -${{ env.full_version }}-.
+      #   uses: tvdias/github-tagger@v0.0.1
+      #   with:
+      #     repo-token: ${{ secrets.GITHUB_TOKEN }}
+      #     tag: ${{ env.full_version }}.
       # - name: Echo
       #   run: echo ${{ steps.create-tag.outputs.result }}
