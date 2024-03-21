@@ -99,14 +99,25 @@ jobs:
       - uses: actions/checkout@v4
       - name: Download all workflow run artifacts
         uses: actions/download-artifact@v4
-      - name: Upload build version ${{ env.full_version }}
-        uses: sebastianpopp/ftp-action@releases/v2
         with:
-          host: ${{ secrets.FTP_SERVER }}
-          user: ${{ secrets.FTP_USER }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          localDir: bin
-          remoteDir: ${{ vars.FTP_PATH }}
+          path: /meatloaf/
+      - name: Upload build version ${{ env.full_version }}
+        uses: milanmk/actions-file-deployer@master
+        with:
+          remote-protocol: "ftp"
+          remote-host: ${{ secrets.FTP_SERVER }}
+          remote-port: ${{ secrets.FTP_port }}
+          remote-user: ${{ secrets.FTP_USER }}
+          remote-password: ${{ secrets.FTP_PASSWORD }}
+          remote-path: ${{ secrets.FTP_PATH }}
+          local-path: /meatloaf/
+      # uses: sebastianpopp/ftp-action@releases/v2
+      #   with:
+      #     host: ${{ secrets.FTP_SERVER }}
+      #     user: ${{ secrets.FTP_USER }}
+      #     password: ${{ secrets.FTP_PASSWORD }}
+      #     localDir: bin
+      #     remoteDir: ${{ vars.FTP_PATH }}
         # uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         # with:
         #   username: ${{ secrets.FTP_USER }}
