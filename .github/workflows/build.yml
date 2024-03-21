@@ -102,22 +102,23 @@ jobs:
         with:
           path: ./meatloaf/
       - name: Upload build version ${{ env.full_version }}
-        uses: milanmk/actions-file-deployer@master
+        # uses: milanmk/actions-file-deployer@master
+        # with:
+        #   remote-protocol: "ftp"
+        #   remote-host: ${{ secrets.FTP_SERVER }}
+        #   remote-port: ${{ secrets.FTP_port }}
+        #   remote-user: ${{ secrets.FTP_USER }}
+        #   remote-password: ${{ secrets.FTP_PASSWORD }}
+        #   remote-path: ${{ secrets.FTP_PATH }}
+        #   local-path: ./meatloaf/
+        uses: sebastianpopp/ftp-action@releases/v2
         with:
-          remote-protocol: "ftp"
-          remote-host: ${{ secrets.FTP_SERVER }}
-          remote-port: ${{ secrets.FTP_port }}
-          remote-user: ${{ secrets.FTP_USER }}
-          remote-password: ${{ secrets.FTP_PASSWORD }}
-          remote-path: ${{ secrets.FTP_PATH }}
-          local-path: ./meatloaf/
-      # uses: sebastianpopp/ftp-action@releases/v2
-      #   with:
-      #     host: ${{ secrets.FTP_SERVER }}
-      #     user: ${{ secrets.FTP_USER }}
-      #     password: ${{ secrets.FTP_PASSWORD }}
-      #     localDir: bin
-      #     remoteDir: ${{ vars.FTP_PATH }}
+          host: ${{ secrets.FTP_SERVER }}
+          user: ${{ secrets.FTP_USER }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          localDir: bin
+          remoteDir: ${{ vars.FTP_PATH }}
+          options: "-p ${{ vars.FTP_PORT }}"
         # uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         # with:
         #   username: ${{ secrets.FTP_USER }}
