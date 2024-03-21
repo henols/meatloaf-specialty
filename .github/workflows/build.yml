@@ -100,7 +100,7 @@ jobs:
       - name: Download all workflow run artifacts
         uses: actions/download-artifact@v4
         with:
-          path: /meatloaf/
+          path: ./meatloaf/
       - name: Upload build version ${{ env.full_version }}
         uses: milanmk/actions-file-deployer@master
         with:
@@ -110,7 +110,7 @@ jobs:
           remote-user: ${{ secrets.FTP_USER }}
           remote-password: ${{ secrets.FTP_PASSWORD }}
           remote-path: ${{ secrets.FTP_PATH }}
-          local-path: /meatloaf/
+          local-path: ./meatloaf/
       # uses: sebastianpopp/ftp-action@releases/v2
       #   with:
       #     host: ${{ secrets.FTP_SERVER }}
