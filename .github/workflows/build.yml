@@ -85,7 +85,7 @@ jobs:
       - name: Archive production artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: dist-without-markdown
+          name: meatloaf.${{ env.build_environment }}.${{ env.flash_size }}-${{ env.full_version }}.bin
           path: bin/*.bin
             
 
