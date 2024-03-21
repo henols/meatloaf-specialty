@@ -34,8 +34,10 @@ jobs:
       matrix:
         environments: 
           - lolin-d32-pro#16mb
-          # - ttgo-t1
-          # - esp32-wroom
+          - lolin-d32-pro#8mb
+          - ttgo-t1#4mb
+          - esp32-wroom#8mb
+          - esp32-wroom#16mb
           # - esp32-wroom-pi1541
           # - fujiapple-rev0
           # - fujinet-v16
@@ -97,16 +99,22 @@ jobs:
       - uses: actions/checkout@v4
       - name: Download all workflow run artifacts
         uses: actions/download-artifact@v4
-      - name: Upload build ${{ env.build_environment }} ${{ matrix.flash_size }}
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+      - name: Upload build version ${{ env.full_version }}
+        uses: sebastianpopp/ftp-action@releases/v2
         with:
-          username: ${{ secrets.FTP_USER }}
+          host: ${{ secrets.FTP_SERVER }}
+          user: ${{ secrets.FTP_USER }}
           password: ${{ secrets.FTP_PASSWORD }}
-          server: ${{ vars.FTP_SERVER }}
-          port: ${{ vars.FTP_PORT }}
-          local-dir: /bin/
-          server-dir: ${{ vars.FTP_PATH }}
-          state-name: .sync-state-${{ matrix.environments }}.json
+          localDir: bin
+          remoteDir: ${{ vars.FTP_PATH }}
+        # uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        # with:
+        #   username: ${{ secrets.FTP_USER }}
+        #   password: ${{ secrets.FTP_PASSWORD }}
+        #   server: ${{ vars.FTP_SERVER }}
+        #   port: ${{ vars.FTP_PORT }}
+        #   local-dir: /bin/
+        #   server-dir: ${{ vars.FTP_PATH }}
           # dry-run: true
       # - name: Create version tag -${{ env.full_version }}-.
       #   uses: tvdias/github-tagger@v0.0.1
