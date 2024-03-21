@@ -37,10 +37,10 @@ jobs:
           - lolin-d32-pro#8mb
           - ttgo-t1#4mb
           # - esp32-wroom#8mb
-          - esp32-wroom#16mb
+          # - esp32-wroom#16mb
           # - esp32-wroom-pi1541
           # - fujiapple-rev0
-          # - fujinet-v16
+          - fujinet-v16#16mb
           # - fujiloaf-rev0
     runs-on: ubuntu-latest
     env:
