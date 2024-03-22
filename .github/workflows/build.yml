@@ -107,6 +107,11 @@ jobs:
           ls -la artifacts/artifact
           echo "full_version=$(cat artifacts/artifact/version.txt)" >> $GITHUB_ENV
           rm -rf artifacts/artifact
+      - name: Collect all artifacts
+        run: |
+          mkdir uploads
+          mkdir uploads/${{ env.full_version }}
+          mv artifacts/meatloaf*/* uploads/${{ env.full_version }}/
       - name: Upload build version ${{ env.full_version }}
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
@@ -114,7 +119,7 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           server: ${{ vars.FTP_SERVER }}
           port: ${{ vars.FTP_PORT }}
-          local-dir: artifacts/
+          local-dir: uploads/
           server-dir: ${{ vars.FTP_PATH }}
           # dry-run: true
       - name: Create Release ${{ env.full_version }}
