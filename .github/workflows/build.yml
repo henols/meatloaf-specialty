@@ -7,18 +7,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      # - name: Install gh
-      #   run: |
-      #     sudo mkdir -p -m 755 /etc/apt/keyrings && wget -qO- https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo tee /etc/apt/keyrings/githubcli-archive-keyring.gpg > /dev/null 
-      #     sudo chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg 
-      #     echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null 
-      #     sudo apt update 
-      #     sudo apt install gh -y
+      - name: Install gh # Only needed if you want to use the github cli gh act
+        run: |
+          sudo mkdir -p -m 755 /etc/apt/keyrings && wget -qO- https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo tee /etc/apt/keyrings/githubcli-archive-keyring.gpg > /dev/null 
+          sudo chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg 
+          echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null 
+          sudo apt update 
+          sudo apt install gh -y
       - name: Calculates next version number
         id: version
         run: .github/scripts/calculate_version.py
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Strore full version
+        run: |
+          echo '${{ steps.version.outputs.major }}.${{ steps.version.outputs.minor }}.${{ steps.version.outputs.patch }}' > version.txt
+      - uses: actions/upload-artifact@v3.1.3 # 
+        with:
+          
+          path: version.txt
     outputs:
       major: ${{ steps.version.outputs.major }}
       minor: ${{ steps.version.outputs.minor }}
@@ -30,7 +35,7 @@ jobs:
   build:
     needs: version
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
         environments: 
           - lolin-d32-pro#16mb
@@ -39,9 +44,9 @@ jobs:
           # - esp32-wroom#8mb
           # - esp32-wroom#16mb
           # - esp32-wroom-pi1541
-          # - fujiapple-rev0
+          - fujiapple-rev0#8mb
           - fujinet-v16#16mb
-          # - fujiloaf-rev0
+          - fujiloaf-rev0#16mb
     runs-on: ubuntu-latest
     env:
       major: ${{needs.version.outputs.major}}
@@ -52,16 +57,13 @@ jobs:
       full_version: ${{needs.version.outputs.full_version}}
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-python@v4
         with:
           python-version: '3.9'
-
       - name: Install PlatformIO Core
         run: |
           python -m pip install --upgrade pip
           pip install --upgrade platformio pyyaml
-        
       - uses: actions/cache@v4
         with:
           path: |
@@ -72,10 +74,8 @@ jobs:
         run: |
           echo "build_environment="$( echo ${{ matrix.environments }} | grep -Po '.+?(?=#)' ) >> $GITHUB_ENV
           echo "flash_size="$( echo ${{ matrix.environments }} | grep -Po '(?<=#).*' ) >> $GITHUB_ENV
-            
       - name: Create platrform.ini for ${{ env.build_environment }} ${{ env.flash_size }}
         run: python .github/scripts/create_config.py environment=${{ env.build_environment }} flash_size=${{ env.flash_size }}
-
       - name: Update version ${{ env.major }}.${{ env.minor }}.${{ env.patch }}, FW version ${{ env.fw_version }}, Date ${{ env.date }}
         run: python .github/scripts/update_version.py '${{ env.major }}' '${{ env.minor }}' '${{ env.patch }}' '${{ env.fw_version }}' '${{ env.date }}'
       - name: Build Meatloaf for ${{ env.build_environment }} ${{ env.flash_size }}
@@ -83,12 +83,10 @@ jobs:
       - name: Rename file meatloaf.${{ env.build_environment }}.bin -> meatloaf.${{ env.build_environment }}.${{ env.flash_size }}-${{ env.full_version }}.bin  
         run: mv bin/meatloaf.${{ env.build_environment }}.bin bin/meatloaf.${{ env.build_environment }}.${{ env.flash_size }}-${{ env.full_version }}.bin
       - name: Archive production artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3.1.3
         with:
           name: meatloaf.${{ env.build_environment }}.${{ env.flash_size }}-${{ env.full_version }}.bin
           path: bin/*.bin
-            
-
 
   create-tag:
     needs: build
@@ -98,41 +96,32 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Download all workflow run artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v3
+        id: download
         with:
-          path: ml-bin
+          path: artifacts
           merge-multiple: true
+      - name: Get version tag
+        run: |
+          echo ${{steps.download.outputs.download-path}}
+          ls -la artifacts/artifact
+          echo "full_version=$(cat artifacts/artifact/version.txt)" >> $GITHUB_ENV
+          rm -rf artifacts/artifact
       - name: Upload build version ${{ env.full_version }}
-        # uses: milanmk/actions-file-deployer@master
-        # with:
-        #   remote-protocol: "ftp"
-        #   remote-host: ${{ secrets.FTP_SERVER }}
-        #   remote-port: ${{ secrets.FTP_port }}
-        #   remote-user: ${{ secrets.FTP_USER }}
-        #   remote-password: ${{ secrets.FTP_PASSWORD }}
-        #   remote-path: ${{ secrets.FTP_PATH }}
-        #   local-path: ./meatloaf/
-        uses: sebastianpopp/ftp-action@releases/v2
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
-          host: ${{ secrets.FTP_SERVER }}
-          user: ${{ secrets.FTP_USER }}
+          username: ${{ secrets.FTP_USER }}
           password: ${{ secrets.FTP_PASSWORD }}
-          localDir: ml-bin/
-          remoteDir: ${{ vars.FTP_PATH }}
-          options: "--port ${{ vars.FTP_PORT }}"
-        # uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        # with:
-        #   username: ${{ secrets.FTP_USER }}
-        #   password: ${{ secrets.FTP_PASSWORD }}
-        #   server: ${{ vars.FTP_SERVER }}
-        #   port: ${{ vars.FTP_PORT }}
-        #   local-dir: /bin/
-        #   server-dir: ${{ vars.FTP_PATH }}
+          server: ${{ vars.FTP_SERVER }}
+          port: ${{ vars.FTP_PORT }}
+          local-dir: artifacts/
+          server-dir: ${{ vars.FTP_PATH }}
           # dry-run: true
-      # - name: Create version tag -${{ env.full_version }}-.
-      #   uses: tvdias/github-tagger@v0.0.1
-      #   with:
-      #     repo-token: ${{ secrets.GITHUB_TOKEN }}
-      #     tag: ${{ env.full_version }}.
-      # - name: Echo
-      #   run: echo ${{ steps.create-tag.outputs.result }}
+      - name: Create Release ${{ env.full_version }}
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
+        with:
+          tag_name: ${{ env.full_version }}
+          release_name: Release ${{ env.full_version }}

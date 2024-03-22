@@ -71,7 +71,7 @@ def calculate_version():
         minor = ver_min
         patch = 0
     else:
-        patch += 1
+        patch = int(patch)+1
 
     date_time = datetime.datetime.now(timezone.utc)
 
