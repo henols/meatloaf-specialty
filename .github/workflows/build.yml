@@ -7,22 +7,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install gh # Only needed if you want to use the github cli gh act
-        run: |
-          sudo mkdir -p -m 755 /etc/apt/keyrings && wget -qO- https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo tee /etc/apt/keyrings/githubcli-archive-keyring.gpg > /dev/null 
-          sudo chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg 
-          echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null 
-          sudo apt update 
-          sudo apt install gh -y
+        with:
+          fetch-depth: 1
+      - name: Get tag
+        id: tag
+        uses: dawidd6/action-get-tag@v1
+        with:
+          strip_v: true
       - name: Calculates next version number
         id: version
-        run: .github/scripts/calculate_version.py
+        run: .github/scripts/calculate_version.py ${{steps.tag.outputs.tag}}
       - name: Strore full version
         run: |
           echo '${{ steps.version.outputs.major }}.${{ steps.version.outputs.minor }}.${{ steps.version.outputs.patch }}' > version.txt
       - uses: actions/upload-artifact@v3.1.3 # 
         with:
-          
           path: version.txt
     outputs:
       major: ${{ steps.version.outputs.major }}

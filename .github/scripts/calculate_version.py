@@ -5,6 +5,7 @@ import subprocess
 import os
 import json
 from datetime import timezone 
+import sys
 
 def get_last_version() :
     """Return the version number of the last release."""
@@ -18,7 +19,7 @@ def get_last_version() :
         .stdout.decode("utf8")
         .strip()
     )
-
+    print(json_string)
     return json.loads(json_string)["tagName"]
 
 def get_header_version() :
@@ -52,13 +53,15 @@ def get_header_version() :
   
 def calculate_version():
 
-    try:
-       last_version_number = get_last_version()
-       major, minor, patch = last_version_number.split(".")
-    except subprocess.CalledProcessError as err:
-        major = 0
-        minor = 0
-        patch = 0  
+    # try:
+    #    last_version_number = get_last_version()
+    #    major, minor, patch = last_version_number.split(".")
+    # except subprocess.CalledProcessError as err:
+    #     major = 0
+    #     minor = 0
+    #     patch = 0  
+    major, minor, patch = sys.argv[1].split(".")
+    
 
     ver_maj, ver_min = get_header_version()
 
