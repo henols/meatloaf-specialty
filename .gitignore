@@ -34,3 +34,4 @@ examples/*
 sdkconfig.*.old
 
 *.dblite
+act.sh
